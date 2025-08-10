@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>スタッフ管理画面</title>
+<style>
+body { font-family: sans-serif; padding: 20px; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+button { margin: 2px; font-size: 14px; padding: 6px 12px; }
+</style>
+</head>
+<body>
+<h1>スタッフ用予約管理</h1>
+<table id="listTable">
+  <thead>
+    <tr>
+      <th>受付番号</th>
+      <th>予約人数</th>
+      <th>予約時刻</th>
+      <th>状態</th>
+      <th>操作</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<script>
+const GAS_URL = "https://script.google.com/macros/s/AKfycbwdKQUQY9z62UwcQWntCklymcy5B9-Ly3thTNSBrxDIvEK8DsR9Ba3KBD3WdXNPfEvm/exec";  //
+
+async function loadList() {
+  try {
+    const res = await fetch(GAS_URL);
+    const data = await res.json();
+    const tbody = document.querySelector("#listTable tbody");
+    tbody.innerHTML = "";
+
+    data.list.forEach(item => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${item[0]}</td>
+        <td>${item[1]}</td>
+        <td>${new Date(item[2]).toLocaleString()}</td>
+        <td>${item[3]}</td>
+        <td>
+          <button onclick="updateState(${item[0]}, 'pickup')">受け取り済み</button>
+          <button onclick="updateState(${item[0]}, 'hold')">保留</button>
+          <button onclick="updateState(${item[0]}, 'cancel')">キャンセル</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch(e) {
+    console.error("データ取得失敗", e);
+  }
+}
+
+async function updateState(number, action) {
+  try {
+    await fetch(GAS_URL, {
+      method: "POST",
+      body: JSON.stringify({ action: action, number: number })
+    });
+    loadList();
+  } catch(e) {
+    alert("状態更新に失敗しました");
+  }
+}
+
+// 最初に読み込み
+loadList();
+// 5秒ごとに自動更新
+setInterval(loadList, 5000);
+</script>
+</body>
+</html>
